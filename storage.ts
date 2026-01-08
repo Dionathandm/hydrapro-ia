@@ -1,7 +1,8 @@
 
-import { User, PlanType } from './types';
+import { User, PlanType, Ad, SupportMessage, AppConfig } from './types';
 
 const DB_KEY = 'hydra_users_db_master';
+const CONFIG_KEY = 'hydra_app_config';
 const ADMIN_EMAIL = 'plugplaysong@gmail.com';
 
 const getDB = (): Record<string, User> => {
@@ -13,12 +14,20 @@ const saveDB = (db: Record<string, User>) => {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
 };
 
+const getConfig = (): AppConfig => {
+  const stored = localStorage.getItem(CONFIG_KEY);
+  return stored ? JSON.parse(stored) : { adIntervalSeconds: 60, ads: [], supportMessages: [] };
+};
+
+const saveConfig = (config: AppConfig) => {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+};
+
 export const authService = {
   async login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
     const db = getDB();
     const user = db[email];
 
-    // Master Backdoor
     if (email === ADMIN_EMAIL && password === 'Ddm8545$') {
       if (!user) {
         const admin: User = {
@@ -74,13 +83,16 @@ export const authService = {
     }
   },
 
-  submitPayment(email: string, plan: PlanType, proof: string): User | null {
+  submitPayment(email: string, plan: PlanType, proof: string, marketing: { source: string, creator: string, coupon: string }): User | null {
     const db = getDB();
     const user = db[email];
     if (user) {
       user.paymentStatus = 'pending';
       user.paymentProof = proof;
       user.plan = plan;
+      user.source = marketing.source;
+      user.referredBy = marketing.creator;
+      user.couponUsed = marketing.coupon;
       user.paymentSubmissionDate = Date.now();
       saveDB(db);
       return user;
@@ -112,19 +124,53 @@ export const authService = {
   },
 
   getBackupData(): string {
-    return JSON.stringify(getDB(), null, 2);
+    return JSON.stringify({ db: getDB(), config: getConfig() }, null, 2);
   },
 
   restoreBackupData(json: string): boolean {
     try {
       const data = JSON.parse(json);
-      if (data && typeof data === 'object') {
-        saveDB(data);
-        return true;
-      }
-      return false;
+      if (data.db) saveDB(data.db);
+      if (data.config) saveConfig(data.config);
+      return true;
     } catch {
       return false;
     }
+  }
+};
+
+export const adminService = {
+  getAppConfig: getConfig,
+  saveAppConfig: saveConfig,
+  
+  addAd(ad: Omit<Ad, 'id' | 'isActive'>) {
+    const config = getConfig();
+    const newAd: Ad = { ...ad, id: Date.now().toString(), isActive: true };
+    config.ads.push(newAd);
+    saveConfig(config);
+  },
+
+  deleteAd(id: string) {
+    const config = getConfig();
+    config.ads = config.ads.filter(a => a.id !== id);
+    saveConfig(config);
+  },
+
+  sendSupportMessage(email: string, text: string, isAdmin = false) {
+    const config = getConfig();
+    const msg: SupportMessage = {
+      id: Date.now().toString(),
+      senderEmail: email,
+      text,
+      timestamp: Date.now(),
+      isAdminReply: isAdmin
+    };
+    config.supportMessages.push(msg);
+    saveConfig(config);
+  },
+
+  getMessagesForUser(email: string) {
+    const config = getConfig();
+    return config.supportMessages.filter(m => m.senderEmail === email);
   }
 };
