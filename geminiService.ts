@@ -19,9 +19,10 @@ export const sendMessage = async (message: string, attachment?: string) => {
       const parts: any[] = [{ text: message + (isVideoRequest ? " (Estilo cinematográfico, 16:9, alta fidelidade)" : "") }];
       
       if (attachment) {
+        const mimeType = attachment.match(/:(.*?);/)?.[1] || 'image/jpeg';
         parts.unshift({
           inlineData: {
-            mimeType: 'image/jpeg',
+            mimeType: mimeType,
             data: attachment.split(',')[1]
           }
         });
@@ -29,7 +30,7 @@ export const sendMessage = async (message: string, attachment?: string) => {
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: { parts },
+        contents: [{ role: 'user', parts }],
       });
 
       let imageData = "";
@@ -48,26 +49,27 @@ export const sendMessage = async (message: string, attachment?: string) => {
     }
 
     // Chat de Texto / Análise de Imagem
-    const contents: any[] = [];
+    const parts: any[] = [];
     if (attachment) {
-      contents.push({
+      const mimeType = attachment.match(/:(.*?);/)?.[1] || 'image/jpeg';
+      parts.push({
         inlineData: {
-          mimeType: 'image/jpeg',
+          mimeType: mimeType,
           data: attachment.split(',')[1]
         }
       });
     }
-    contents.push({ text: message });
+    parts.push({ text: message });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: { parts: contents },
+      contents: [{ role: 'user', parts }],
       config: { systemInstruction: SYSTEM_INSTRUCTION }
     });
 
-    return { text: response.text };
+    return { text: response.text || "Sem resposta do núcleo." };
   } catch (error) {
-    console.error("HydraPro Error:", error);
-    return { text: "Houve um erro na conexão com o núcleo HydraPro." };
+    console.error("HydraPro Core Error:", error);
+    return { text: "Erro crítico de núcleo. Verifique se sua chave de API é válida ou tente novamente em instantes." };
   }
 };

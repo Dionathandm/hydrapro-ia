@@ -30,7 +30,7 @@ export default function App() {
   const FREE_MAX = 600;
 
   useEffect(() => {
-    if (view === 'splash') setTimeout(() => setView('auth'), 1500);
+    if (view === 'splash') setTimeout(() => setView('auth'), 1200);
   }, [view]);
 
   useEffect(() => {
@@ -82,8 +82,8 @@ export default function App() {
 
   if (view === 'splash') return (
     <div className="h-screen bg-hydra-dark flex flex-col items-center justify-center animate-pulse">
-      <Logo size={80} className="text-hydra-cyan" />
-      <div className="mt-4 font-black tracking-widest text-xl">HYDRAPRO</div>
+      <Logo size={60} />
+      <div className="mt-2 font-black text-lg">HYDRA</div>
     </div>
   );
 
@@ -92,112 +92,106 @@ export default function App() {
   if (view === 'payment') return <PaymentView plan={selPlan} userEmail={user?.email || ''} onSuccess={u => { if(u) setUser(u); setView('blocked'); }} onBack={() => setView('plans')} />;
   if (view === 'admin') return <AdminPanel currentUser={user!} onLogout={() => setView('auth')} />;
   if (view === 'blocked') return (
-    <div className="h-screen bg-hydra-dark flex flex-col items-center justify-center p-8 text-center safe-top safe-bottom">
-      <AlertTriangle size={60} className="text-yellow-500 mb-6" />
-      <h2 className="text-2xl font-bold">EM ANÁLISE</h2>
-      <p className="text-slate-400 mt-2 text-sm">Seu acesso será liberado em instantes pelo administrador.</p>
-      <button onClick={() => setView('auth')} className="mt-12 text-xs font-bold text-hydra-cyan border border-hydra-cyan px-6 py-2 rounded-full">SAIR</button>
+    <div className="h-screen bg-hydra-dark flex flex-col items-center justify-center p-4 text-center">
+      <AlertTriangle size={48} className="text-yellow-500 mb-4" />
+      <h2 className="text-xl font-bold">AGUARDANDO</h2>
+      <p className="text-slate-400 mt-1 text-xs px-8">Pagamento em análise pelo administrador.</p>
+      <button onClick={() => setView('auth')} className="mt-10 text-[10px] font-bold text-slate-500 uppercase">Sair</button>
     </div>
   );
 
   return (
     <div className="flex flex-col h-screen bg-hydra-dark text-slate-200 safe-top safe-bottom overflow-hidden">
-      {/* HEADER MOBILE */}
-      <header className="h-14 border-b border-white/5 bg-hydra-panel/80 backdrop-blur-lg flex items-center justify-between px-4 sticky top-0 z-40">
+      <header className="h-12 border-b border-white/5 bg-hydra-panel/90 backdrop-blur-md flex items-center justify-between px-3 sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <Logo size={24} />
-          <span className="font-bold text-sm">HYDRAPRO</span>
+          <Logo size={20} />
+          <span className="font-bold text-xs">HYDRA</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {user?.plan === 'free' && (
-            <div className="text-[9px] font-bold bg-white/5 px-2 py-1 rounded-md border border-white/10">
-              {Math.max(0, Math.floor((FREE_MAX - usage) / 60))}:{((FREE_MAX - usage) % 60).toString().padStart(2, '0')}
+            <div className="text-[8px] font-bold bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+              {Math.max(0, Math.floor((FREE_MAX - usage) / 60))}:{( (FREE_MAX - usage) % 60).toString().padStart(2, '0')}
             </div>
           )}
-          <button onClick={() => setView('support')} className="relative text-slate-400">
-            <MessageSquare size={20} />
-            {supportChat.some(m => m.isAdminReply) && <span className="absolute -top-1 -right-1 w-2 h-2 bg-hydra-cyan rounded-full"></span>}
+          <button onClick={() => setView('support')} className="relative p-1 text-slate-400">
+            <MessageSquare size={18} />
+            {supportChat.some(m => m.isAdminReply) && <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-hydra-cyan rounded-full"></span>}
           </button>
-          <button onClick={() => setMessages([])} className="text-slate-500"><Trash2 size={20} /></button>
+          <button onClick={() => setMessages([])} className="p-1 text-slate-500"><Trash2 size={18} /></button>
         </div>
       </header>
 
-      {/* ADS & MODALS */}
       {showAd && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
-          <div className="bg-hydra-surface border border-white/10 rounded-2xl overflow-hidden w-full max-w-xs relative">
-            <button onClick={() => setShowAd(null)} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full z-10"><X size={18}/></button>
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-2">
+          <div className="bg-hydra-surface border border-white/10 rounded-xl overflow-hidden w-full max-w-[280px] relative">
+            <button onClick={() => setShowAd(null)} className="absolute top-1 right-1 p-1 bg-black/50 rounded-full z-10"><X size={16}/></button>
             <img src={showAd.mediaUrl} className="w-full aspect-square object-cover" />
-            <div className="p-4 space-y-3">
-              <h3 className="font-bold">{showAd.title}</h3>
-              <p className="text-xs text-slate-400">{showAd.description}</p>
-              <a href={showAd.link} target="_blank" className="block w-full bg-hydra-cyan text-black py-3 rounded-xl text-center font-bold text-sm">SAIBA MAIS</a>
+            <div className="p-3 space-y-2">
+              <h3 className="font-bold text-sm">{showAd.title}</h3>
+              <a href={showAd.link} target="_blank" className="block w-full bg-hydra-cyan text-black py-2 rounded-lg text-center font-bold text-xs uppercase">Saber Mais</a>
             </div>
           </div>
         </div>
       )}
 
-      {/* SUPPORT DRAWER */}
       {view === 'support' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end">
-          <div className="bg-hydra-panel h-[80vh] rounded-t-3xl border-t border-white/10 flex flex-col animate-fade-in">
-            <div className="h-1.5 w-12 bg-white/20 rounded-full mx-auto mt-3"></div>
-            <div className="p-4 border-b border-white/5 flex justify-between items-center">
-              <span className="font-bold">Suporte Direto</span>
-              <button onClick={() => setView('chat')} className="text-slate-500"><X size={20}/></button>
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col justify-end">
+          <div className="bg-hydra-panel h-[75vh] rounded-t-2xl border-t border-white/10 flex flex-col animate-fade-in shadow-2xl">
+            <div className="h-1 w-8 bg-white/10 rounded-full mx-auto mt-2"></div>
+            <div className="p-3 border-b border-white/5 flex justify-between items-center">
+              <span className="font-bold text-xs">SUPORTE HYDRA</span>
+              <button onClick={() => setView('chat')} className="text-slate-500"><X size={18}/></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
               {supportChat.map(m => (
                 <div key={m.id} className={`flex ${m.isAdminReply ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.isAdminReply ? 'bg-slate-800' : 'bg-hydra-blue shadow-lg'}`}>{m.text}</div>
+                  <div className={`max-w-[85%] p-2.5 rounded-xl text-[11px] ${m.isAdminReply ? 'bg-slate-800' : 'bg-hydra-blue shadow-lg'}`}>{m.text}</div>
                 </div>
               ))}
               <div ref={bottomRef} />
             </div>
-            <div className="p-4 bg-black/40 border-t border-white/5 flex gap-2">
-              <input value={supportInput} onChange={e=>setSupportInput(e.target.value)} placeholder="Sua dúvida..." className="flex-1 bg-white/5 border border-white/10 p-3 rounded-xl text-sm outline-none" />
-              <button onClick={() => { if(!supportInput) return; adminService.sendSupportMessage(user!.email, supportInput); setSupportInput(''); setSupportChat(adminService.getMessagesForUser(user!.email)); }} className="bg-hydra-cyan text-black p-3 rounded-xl"><Send size={20}/></button>
+            <div className="p-3 bg-black/40 border-t border-white/5 flex gap-2">
+              <input value={supportInput} onChange={e=>setSupportInput(e.target.value)} placeholder="Dúvida..." className="flex-1 bg-white/5 border border-white/10 p-2.5 rounded-xl text-xs outline-none" />
+              <button onClick={() => { if(!supportInput) return; adminService.sendSupportMessage(user!.email, supportInput); setSupportInput(''); setSupportChat(adminService.getMessagesForUser(user!.email)); }} className="bg-hydra-cyan text-black p-2.5 rounded-xl"><Send size={18}/></button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CHAT MAIN AREA */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+      <main className="flex-1 overflow-y-auto px-2 py-2 space-y-3 scroll-smooth">
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center opacity-30 space-y-4">
-            <Logo size={48} />
-            <p className="text-xs font-bold tracking-[0.2em]">SISTEMA PRONTO PARA COMANDO</p>
+          <div className="h-full flex flex-col items-center justify-center opacity-20">
+            <Logo size={40} />
+            <p className="text-[9px] font-bold mt-2 uppercase tracking-widest">Aguardando Comando</p>
           </div>
         )}
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[95%] ${m.role === 'user' ? 'bg-hydra-blue text-white px-4 py-2 rounded-2xl rounded-tr-none text-sm' : 'w-full'}`}>
+            <div className={`max-w-[98%] ${m.role === 'user' ? 'bg-hydra-blue text-white px-3 py-1.5 rounded-xl rounded-tr-none text-[13px]' : 'w-full'}`}>
               <MessageBubble message={m} />
             </div>
           </div>
         ))}
-        {loading && <div className="text-[10px] font-bold text-hydra-cyan animate-pulse">PROCESSANDO...</div>}
+        {loading && <div className="text-[9px] font-bold text-hydra-cyan animate-pulse ml-2 uppercase">Core_Busy...</div>}
         <div ref={bottomRef} />
       </main>
 
-      {/* INPUT MOBILE */}
-      <footer className="p-3 bg-hydra-panel border-t border-white/5">
-        <form onSubmit={onSend} className="max-w-xl mx-auto flex items-end gap-2">
-          <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-1 px-3 flex items-center transition-all focus-within:border-hydra-cyan min-h-[50px]">
-            <button type="button" onClick={() => fileRef.current?.click()} className="p-2 text-slate-500"><Paperclip size={20}/></button>
+      <footer className="p-2 bg-hydra-panel border-t border-white/5">
+        <form onSubmit={onSend} className="max-w-xl mx-auto flex items-center gap-1.5">
+          <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-1 px-2 flex items-center transition-all focus-within:border-hydra-cyan min-h-[44px]">
+            <button type="button" onClick={() => fileRef.current?.click()} className="p-1.5 text-slate-500"><Paperclip size={18}/></button>
             <input type="file" ref={fileRef} hidden accept="image/*" onChange={e => { const f=e.target.files?.[0]; if(f){ const r=new FileReader(); r.onload=()=>setAt(r.result as string); r.readAsDataURL(f); } }} />
             <textarea 
               rows={1}
               value={input} 
               onChange={e => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-              placeholder="Digite um comando..." 
-              className="flex-1 bg-transparent py-3 text-sm outline-none resize-none max-h-32"
+              placeholder="Digite..." 
+              className="flex-1 bg-transparent py-2 text-[13px] outline-none resize-none max-h-24"
             />
           </div>
-          <button type="submit" className="bg-hydra-cyan text-black p-3.5 rounded-2xl shadow-lg shadow-cyan-900/40 active:scale-90 transition-all"><Send size={22}/></button>
+          <button type="submit" className="bg-hydra-cyan text-black p-2.5 rounded-xl shadow-lg active:scale-90 transition-all"><Send size={20}/></button>
         </form>
-        {at && <div className="mt-2 text-[9px] text-hydra-cyan font-bold flex items-center gap-1"><Paperclip size={10}/> IMAGEM_PROCESSADA.EXE</div>}
+        {at && <div className="mt-1 px-2 text-[8px] text-hydra-cyan font-bold flex items-center gap-1 uppercase tracking-tighter"><Paperclip size={8"/> Mídia_Pronta.exe</div>}
       </footer>
     </div>
   );
