@@ -1,100 +1,76 @@
+
 import React, { useState } from 'react';
 import { Message } from './types';
 import { CodeBlock } from './CodeBlock';
-import { Download, Play } from 'lucide-react';
+import { Download, Play, Video } from 'lucide-react';
 
-interface MessageBubbleProps {
-  message: Message;
-}
-
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+export const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
   const isUser = message.role === 'user';
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const handleDownloadImage = (imageData: string, filenamePrefix: string = 'hydra-pro') => {
+  const downloadMedia = (data: string, name: string) => {
     const link = document.createElement('a');
-    link.href = imageData;
-    link.download = `${filenamePrefix}-${Date.now()}.png`;
+    link.href = data;
+    link.download = `${name}-${Date.now()}.png`;
     link.click();
-  };
-
-  const renderSimulatedVideo = (videoData: string) => {
-    return (
-      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl group mb-4">
-        <div className="absolute inset-0 pointer-events-none z-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-        <div className="w-full h-full overflow-hidden">
-           <img 
-             src={videoData} 
-             alt="Video Frame" 
-             className={`w-full h-full object-cover transform transition-transform duration-[10000ms] ease-in-out ${isPlaying ? 'scale-125 translate-x-4' : 'scale-100'}`}
-           />
-        </div>
-        {!isPlaying && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-            <button 
-              onClick={() => setIsPlaying(true)}
-              className="w-16 h-16 rounded-full bg-hydra-cyan/90 hover:bg-white text-black transition-all flex items-center justify-center"
-            >
-              <Play size={28} className="ml-1" fill="currentColor" />
-            </button>
-          </div>
-        )}
-        <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-             <button onClick={() => handleDownloadImage(videoData, 'hydra-frame')} className="p-2 bg-black/70 text-white rounded-full"><Download size={14}/></button>
-        </div>
-      </div>
-    );
   };
 
   if (isUser) {
     return (
       <div className="flex flex-col items-end">
         {message.attachment && (
-          <div className="mb-2 max-w-[200px] rounded-lg overflow-hidden border border-hydra-cyan/30 shadow-md">
-            <img src={message.attachment} alt="User upload" className="w-full h-auto object-cover opacity-90" />
-          </div>
+          <img src={message.attachment} className="w-40 rounded-lg mb-2 border border-hydra-cyan/30" alt="Upload" />
         )}
-        <div className="whitespace-pre-wrap text-right">{message.text}</div>
+        <div className="bg-hydra-blue px-4 py-2 rounded-2xl rounded-tr-none text-white shadow-lg">
+          {message.text}
+        </div>
       </div>
     );
   }
 
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = codeBlockRegex.exec(message.text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', content: message.text.substring(lastIndex, match.index) });
-    }
-    parts.push({ type: 'code', language: match[1] || 'text', content: match[2].trim() });
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < message.text.length) {
-    parts.push({ type: 'text', content: message.text.substring(lastIndex) });
-  }
+  const renderVideo = (url: string) => (
+    <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 bg-black group shadow-2xl">
+      <div className={`absolute inset-0 transition-transform duration-[8000ms] ease-in-out ${isPlaying ? 'scale-125 translate-x-4' : 'scale-100'}`}>
+        <img src={url} className="w-full h-full object-cover" alt="Video frame" />
+      </div>
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+      {!isPlaying && (
+        <button onClick={() => setIsPlaying(true)} className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 bg-hydra-cyan/90 rounded-full flex items-center justify-center text-black shadow-cyan-500/50 shadow-2xl">
+            <Play size={28} fill="currentColor" />
+          </div>
+        </button>
+      )}
+      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-red-600 text-[10px] font-bold text-white rounded animate-pulse">REC</div>
+      <button onClick={() => downloadMedia(url, 'hydra-video')} className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+        <Download size={16} />
+      </button>
+    </div>
+  );
 
   return (
-    <div className="w-full">
-      {message.isSimulatedVideo && message.video && renderSimulatedVideo(message.video)}
+    <div className="w-full space-y-3">
+      {message.isSimulatedVideo && message.video && renderVideo(message.video)}
       {message.image && !message.isSimulatedVideo && (
-        <div className="group relative mb-3 rounded-lg overflow-hidden border border-slate-700 shadow-lg bg-black">
-          <img src={message.image} alt="Generated content" className="w-full h-auto object-cover" />
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-             <button onClick={() => handleDownloadImage(message.image!, 'hydra-gen')} className="p-2 bg-black/70 text-white rounded-full"><Download size={14}/></button>
-          </div>
+        <div className="relative group rounded-xl overflow-hidden border border-slate-700">
+          <img src={message.image} className="w-full h-auto" alt="AI Gen" />
+          <button onClick={() => downloadMedia(message.image!, 'hydra-image')} className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+            <Download size={16} />
+          </button>
         </div>
       )}
-      {parts.length === 0 ? (
-        <div className="whitespace-pre-wrap">{message.text}</div>
-      ) : (
-        parts.map((part, index) => (
-          part.type === 'code' ? 
-            <CodeBlock key={index} code={part.content} language={part.language} /> : 
-            <p key={index} className="whitespace-pre-wrap mb-2 last:mb-0">{part.content}</p>
-        ))
-      )}
+      
+      <div className="text-slate-200 prose prose-invert max-w-none">
+        {message.text.split('```').map((part, i) => {
+          if (i % 2 === 1) {
+            const lines = part.split('\n');
+            const lang = lines[0].trim();
+            const code = lines.slice(1).join('\n').trim();
+            return <CodeBlock key={i} code={code} language={lang} />;
+          }
+          return <p key={i} className="whitespace-pre-wrap">{part}</p>;
+        })}
+      </div>
     </div>
   );
 };
